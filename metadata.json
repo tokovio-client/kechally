@@ -1,0 +1,6 @@
+{
+  "name": "Kechally",
+  "description": "Kechally Mukena - Exquisite hand-embroidered Muslim prayer garments crafted with care by local skilled artisan mothers in Malang.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Jost:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Jost", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Cormorant Garamond", "Playfair Display", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-brand-primary: #5A3A3A; /* deep rose-brown */
+  --color-brand-primary-dark: #5A3A3A; /* deep rose-brown */
+  --color-brand-primary-light: #E6CFC8; /* warm nude */
+  --color-brand-bg: #FDF8F5; /* warm cream background */
+  --color-brand-bg-accent: #FAF0F0; /* soft blush surface */
+  --color-brand-surface: #FAF0F0; /* soft blush surface */
+  --color-brand-pink: #E8B4B8; /* rose */
+  --color-brand-accent: #C48A8F; /* dusty rose */
+  --color-brand-muted: #8A6A6A; /* warm taupe */
+  --color-brand-dark: #5A3A3A; /* deep rose-brown */
+  --color-brand-nude: #E6CFC8; /* warm nude */
+  --color-brand-gold: #C48A8F; /* dusty rose as accent / gold replacement */
+}
+
+/* Custom scrollbar to match the high-end editorial feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F5F2ED;
+}
+::-webkit-scrollbar-thumb {
+  background: #D9D2C9;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #C9BEB0;
+}
+
+body {
+  background-color: var(--color-brand-bg);
+  color: var(--color-brand-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Elegant transition classes to match motion/animate limits */
+.fade-in-up {
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+}
+
