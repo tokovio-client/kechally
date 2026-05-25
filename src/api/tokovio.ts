@@ -24,6 +24,8 @@ export interface ApiStore {
   logo_url: string;
   is_published: boolean;
   theme_config: string;
+  payment_config?: string;
+  shipping_config?: string;
   created_at: string;
 }
 
@@ -42,6 +44,31 @@ export interface ApiShippingMethod {
   courier: string;
   service: string;
   price: number;
+}
+
+export interface ApiProvince {
+  id: string;
+  name: string;
+}
+
+export interface ApiCity {
+  id: string;
+  province_id: string;
+  name: string;
+  type: string;
+}
+
+export interface ApiDistrict {
+  id: string;
+  city_id: string;
+  name: string;
+}
+
+export interface ApiSubdistrict {
+  id: string;
+  district_id: string;
+  name: string;
+  postal_code: string;
 }
 
 export interface ApiShippingResponse {
@@ -63,6 +90,9 @@ export interface ApiShippingAddress {
   address: string;
   city: string;
   postal_code: string;
+  province?: string;
+  district?: string;
+  subdistrict?: string;
 }
 
 export interface ApiCreateOrderPayload {
@@ -71,6 +101,9 @@ export interface ApiCreateOrderPayload {
   shippingAddress: ApiShippingAddress;
   payment_method: string;
   is_preorder: boolean;
+  shipping_method?: string;
+  shipping_price?: number;
+  shipping_cost?: number;
 }
 
 export interface ApiOrder {
@@ -78,6 +111,23 @@ export interface ApiOrder {
   total_amount: number;
   status: string;
   created_at: string;
+  payment_url?: string;
+  is_preorder?: boolean;
+  buyer_name?: string;
+  buyer_phone?: string;
+  buyer_address?: string;
+  shipping_cost?: number;
+  courier?: string;
+  tracking_number?: string;
+  tracking_link?: string;
+  payment_evidence_url?: string;
+  delivery_photo_url?: string;
+  items: {
+    id: string;
+    product_id: string;
+    quantity: number;
+    price: number;
+  }[];
 }
 
 // ─── Error Handling ──────────────────────────────────────────────────────────
@@ -94,6 +144,20 @@ export class TokovioApiError extends Error {
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${STORE_BASE}${path}`, {
+    ...options,
+    headers: { ...headers, ...(options?.headers ?? {}) },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new TokovioApiError(res.status, text || `HTTP ${res.status}`);
+  }
+
+  return res.json() as Promise<T>;
+}
+
+async function rootFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
     headers: { ...headers, ...(options?.headers ?? {}) },
   });
@@ -128,9 +192,10 @@ export async function getProduct(id: string): Promise<ApiProduct> {
   return apiFetch<ApiProduct>(`/products/${id}`);
 }
 
-/** Fetch available shipping methods */
-export async function getShippingMethods(): Promise<ApiShippingMethod[]> {
-  const res = await apiFetch<ApiShippingResponse>("/shipping-methods");
+/** Fetch available shipping methods, optionally filtered by cityId */
+export async function getShippingMethods(cityId?: string): Promise<ApiShippingMethod[]> {
+  const query = cityId ? `?city_id=${encodeURIComponent(cityId)}` : "";
+  const res = await apiFetch<ApiShippingResponse>(`/shipping-methods${query}`);
   return res.data ?? [];
 }
 
@@ -141,3 +206,89 @@ export async function createOrder(payload: ApiCreateOrderPayload): Promise<ApiOr
     body: JSON.stringify(payload),
   });
 }
+
+/** Fetch a specific order by ID */
+export async function getOrder(orderId: string): Promise<ApiOrder> {
+  return rootFetch<ApiOrder>(`/orders/${orderId}`);
+}
+
+/** Fetch all provinces */
+export async function getProvinces(): Promise<ApiProvince[]> {
+  return rootFetch<ApiProvince[]>("/provinces");
+}
+
+/** Fetch cities in a province */
+export async function getCities(provinceId: string): Promise<ApiCity[]> {
+  return rootFetch<ApiCity[]>(`/cities?province_id=${provinceId}`);
+}
+
+/** Fetch districts in a city */
+export async function getDistricts(cityId: string): Promise<ApiDistrict[]> {
+  return rootFetch<ApiDistrict[]>(`/districts?city_id=${cityId}`);
+}
+
+/** Fetch subdistricts in a district */
+export async function getSubdistricts(districtId: string): Promise<ApiSubdistrict[]> {
+  return rootFetch<ApiSubdistrict[]>(`/subdistricts?district_id=${districtId}`);
+}
+
+/** Request OTP for security verification */
+export async function requestOtp(target: string, method: "email" | "sms" = "email"): Promise<{ message: string }> {
+  return rootFetch<{ message: string }>("/auth/request-otp", {
+    method: "POST",
+    body: JSON.stringify({ target, method }),
+  });
+}
+
+/** Verify Buyer OTP code */
+export async function verifyBuyerOtp(target: string, code: string): Promise<{ success: boolean; message?: string }> {
+  return rootFetch<{ success: boolean; message?: string }>("/auth/verify-buyer-otp", {
+    method: "POST",
+    body: JSON.stringify({ target, code }),
+  });
+}
+
+/** Upload payment proof for a manual transfer order */
+export async function uploadPaymentEvidence(orderId: string, file: File): Promise<{ success: boolean }> {
+  const formData = new FormData();
+  formData.append("evidence", file);
+
+  const res = await fetch(`${BASE_URL}/orders/${orderId}/payment-evidence`, {
+    method: "POST",
+    headers: {
+      "X-API-Key": API_KEY,
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new TokovioApiError(res.status, text || `HTTP ${res.status}`);
+  }
+
+  return res.json();
+}
+
+/** Confirm delivery with an optional photo */
+export async function confirmDelivery(orderId: string, photo?: File): Promise<{ success: boolean }> {
+  const formData = new FormData();
+  if (photo) {
+    formData.append("photo", photo);
+  }
+
+  const res = await fetch(`${BASE_URL}/orders/${orderId}/deliver`, {
+    method: "POST",
+    headers: {
+      "X-API-Key": API_KEY,
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new TokovioApiError(res.status, text || `HTTP ${res.status}`);
+  }
+
+  return res.json();
+}
+

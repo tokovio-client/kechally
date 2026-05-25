@@ -1,0 +1,869 @@
+{
+    "info": {
+        "name": "Tokovio API",
+        "description": "API documentation for the Tokovio Go Backend",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Register User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/register",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "register"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Login User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/login",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "login"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Request OTP",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"target\": \"test@example.com\",\n  \"method\": \"email\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/request-otp",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "request-otp"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Verify Buyer OTP",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"target\": \"test@example.com\",\n  \"code\": \"123456\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/verify-buyer-otp",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "verify-buyer-otp"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Stores",
+            "item": [
+                {
+                    "name": "Create Store",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{jwt_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"slug\": \"my-store\",\n  \"name\": \"My Store\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/stores",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stores"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Store by Slug",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/stores/:slug",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stores",
+                                ":slug"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "slug",
+                                    "value": "my-store"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Store",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{jwt_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"My Updated Store\",\n  \"theme_config\": \"{\\\"color\\\":\\\"blue\\\"}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/stores/:slug",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stores",
+                                ":slug"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "slug",
+                                    "value": "my-store"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Publish Store",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{jwt_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/stores/:slug/publish",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stores",
+                                ":slug",
+                                "publish"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "slug",
+                                    "value": "my-store"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Store KPIs",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/stores/:slug/analytics/kpi",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stores",
+                                ":slug",
+                                "analytics",
+                                "kpi"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{jwt_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Store Revenue Chart",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/stores/:slug/analytics/revenue?period=7d",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stores",
+                                ":slug",
+                                "analytics",
+                                "revenue"
+                            ],
+                            "query": [
+                                {
+                                    "key": "period",
+                                    "value": "7d"
+                                }
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{jwt_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Store Events",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/stores/:slug/events",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stores",
+                                ":slug",
+                                "events"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{jwt_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Upload Store Logo",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/stores/:slug/upload-logo",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stores",
+                                ":slug",
+                                "upload-logo"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{jwt_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "file",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Store Shipping Methods",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/stores/:slug/shipping-methods?city_id={{city_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stores",
+                                ":slug",
+                                "shipping-methods"
+                            ],
+                            "query": [
+                                {
+                                    "key": "city_id",
+                                    "value": "{{city_id}}"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "slug",
+                                    "value": "my-store"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Products",
+            "item": [
+                {
+                    "name": "Create Product",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{jwt_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"T-Shirt\",\n  \"description\": \"A nice cotton t-shirt\",\n  \"price\": 150000,\n  \"stock\": 10,\n  \"image_url\": \"https://example.com/image.jpg\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/stores/:slug/products",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stores",
+                                ":slug",
+                                "products"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "slug",
+                                    "value": "my-store"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "List Store Products",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/stores/:slug/products",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stores",
+                                ":slug",
+                                "products"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "slug",
+                                    "value": "my-store"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "List Categories",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/categories",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "categories"
+                            ],
+                            "query": []
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Orders",
+            "item": [
+                {
+                    "name": "Place Order",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"buyer_name\": \"John Doe\",\n  \"buyer_phone\": \"081234567890\",\n  \"buyer_address\": \"123 Main Street\",\n  \"items\": [\n    {\n      \"product_id\": \"{{product_id}}\",\n      \"quantity\": 2\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/stores/:slug/orders",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stores",
+                                ":slug",
+                                "orders"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "slug",
+                                    "value": "my-store"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Order Status",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/orders/:id",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "orders",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "{{order_id}}"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "List Orders",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/stores/:slug/orders?page=1&limit=10&status=all",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stores",
+                                ":slug",
+                                "orders"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "all"
+                                }
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{jwt_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Order Stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/stores/:slug/orders/stats",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "stores",
+                                ":slug",
+                                "orders",
+                                "stats"
+                            ],
+                            "query": []
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{jwt_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Upload Payment Evidence",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "evidence",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/orders/:id/payment-evidence",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "orders",
+                                ":id",
+                                "payment-evidence"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "{{order_id}}"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Payments",
+            "item": [
+                {
+                    "name": "Payment Webhook",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"order_id\": \"{{order_id}}\",\n  \"gateway_ref\": \"PAY-12345\",\n  \"status\": \"success\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/payments/webhook",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "payments",
+                                "webhook"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Shipping",
+            "item": [
+                {
+                    "name": "Check Shipping Rates",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"origin\": \"JKT\",\n  \"destination\": \"BDG\",\n  \"weight\": 1000\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/shipping/rates",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "shipping",
+                                "rates"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Locations",
+            "item": [
+                {
+                    "name": "Get Provinces",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/provinces",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "provinces"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Cities",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/cities?province_id={{province_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "cities"
+                            ],
+                            "query": [
+                                {
+                                    "key": "province_id",
+                                    "value": "{{province_id}}"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Districts",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/districts?city_id={{city_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "districts"
+                            ],
+                            "query": [
+                                {
+                                    "key": "city_id",
+                                    "value": "{{city_id}}"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Subdistricts",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/subdistricts?district_id={{district_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "subdistricts"
+                            ],
+                            "query": [
+                                {
+                                    "key": "district_id",
+                                    "value": "{{district_id}}"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8080",
+            "type": "string"
+        },
+        {
+            "key": "jwt_token",
+            "value": "your_jwt_token_here",
+            "type": "string"
+        },
+        {
+            "key": "product_id",
+            "value": "your_product_uuid_here",
+            "type": "string"
+        },
+        {
+            "key": "order_id",
+            "value": "your_order_uuid_here",
+            "type": "string"
+        },
+        {
+            "key": "province_id",
+            "value": "11",
+            "type": "string"
+        },
+        {
+            "key": "city_id",
+            "value": "1101",
+            "type": "string"
+        },
+        {
+            "key": "district_id",
+            "value": "1101010",
+            "type": "string"
+        }
+    ]
+}

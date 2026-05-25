@@ -159,6 +159,10 @@ export default function App() {
               onRemoveItem={handleRemoveItem}
               onClearCart={handleClearCart}
               setActiveTab={handleTabChange}
+              onViewOrder={(orderId) => {
+                // Navigate to the dedicated order detail page
+                window.location.href = `/orders/${orderId}`;
+              }}
             />
           </div>
         )}
