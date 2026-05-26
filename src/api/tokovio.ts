@@ -29,6 +29,80 @@ export interface ApiStore {
   created_at: string;
 }
 
+export interface ThemeConfig {
+  // ── Hero ──────────────────────────────────────────────────────────────────
+  hero?: {
+    title?: string;
+    eyebrow?: string;
+    description?: string;
+    primaryCta?: string;
+    secondaryCta?: string;
+    stats?: Array<{ value: string; label: string }>;
+    floatingCardTag?: string;
+    floatingCardTitle?: string;
+    floatingCardSubtitle?: string;
+    image?: string;
+  };
+  // ── Marquee ───────────────────────────────────────────────────────────────
+  marquee?: {
+    items?: string[];
+  };
+  // ── About ─────────────────────────────────────────────────────────────────
+  about?: {
+    eyebrow?: string;
+    headline?: string;
+    body1?: string;
+    body2?: string;
+    timeline?: Array<{ year: string; description: string }>;
+    image?: string;
+  };
+  // ── Social Impact ─────────────────────────────────────────────────────────
+  socialImpact?: {
+    eyebrow?: string;
+    headline?: string;
+    body?: string;
+    stats?: Array<{ value: string; label: string }>;
+  };
+  // ── Selected Pieces ───────────────────────────────────────────────────────
+  selectedPieces?: {
+    eyebrow?: string;
+    headline?: string;
+    body1?: string;
+    body2?: string;
+  };
+  // ── Testimonial ───────────────────────────────────────────────────────────
+  testimonial?: {
+    quote?: string;
+    attribution?: string;
+  };
+  // ── Collaboration CTA ─────────────────────────────────────────────────────
+  collaboration?: {
+    eyebrow?: string;
+    headline?: string;
+    body?: string;
+    primaryCta?: string;
+    instagramHandle?: string;
+  };
+  // ── Design tokens ─────────────────────────────────────────────────────────
+  colors?: {
+    primary?: string;
+    surface?: string;
+    tertiary?: string;
+    secondary?: string;
+    background?: string;
+    "on-surface"?: string;
+    "outline-variant"?: string;
+    "surface-container"?: string;
+    "on-surface-variant"?: string;
+  };
+  template?: string;
+  customCSS?: string;
+  heroStyle?: string;
+  fontFamily?: string;
+  borderRadius?: string;
+  primaryColor?: string;
+}
+
 export interface ApiProduct {
   id: string;
   name: string;
