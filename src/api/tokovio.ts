@@ -3,7 +3,7 @@
  * Typed fetch wrapper for all Kechally store endpoints.
  */
 
-const BASE_URL = import.meta.env.VITE_TOKOVIO_BASE_URL ?? "https://api.tokovio.biz.id";
+const BASE_URL = import.meta.env.VITE_TOKOVIO_BASE_URL ?? "https://api.tokovio.com";
 const STORE_SLUG = import.meta.env.VITE_TOKOVIO_STORE_SLUG ?? "kechally";
 const API_KEY = import.meta.env.VITE_TOKOVIO_API_KEY ?? "";
 
