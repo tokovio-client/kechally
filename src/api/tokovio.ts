@@ -83,6 +83,44 @@ export interface ThemeConfig {
     primaryCta?: string;
     instagramHandle?: string;
   };
+  // ── Values Section ────────────────────────────────────────────────────────
+  values?: {
+    eyebrow?: string;
+    headline?: string;
+    description?: string;
+    brandStatement?: string;
+    brandPhilosophyLabel?: string;
+    card1?: {
+      title?: string;
+      description?: string;
+      label?: string;
+    };
+    card2?: {
+      title?: string;
+      description?: string;
+      label?: string;
+    };
+    chaptersSubtitle?: string;
+    chaptersTitle?: string;
+    chapter1?: {
+      title?: string;
+      description?: string;
+      image?: string;
+    };
+    chapter2?: {
+      title?: string;
+      description?: string;
+      image?: string;
+    };
+    globalReachEyebrow?: string;
+    globalReachHeadline?: string;
+    globalReachCountries?: Array<{
+      country: string;
+      percentage: string;
+      label: string;
+      emoji: string;
+    }>;
+  };
   // ── Design tokens ─────────────────────────────────────────────────────────
   colors?: {
     primary?: string;
