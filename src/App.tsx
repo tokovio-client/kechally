@@ -13,7 +13,7 @@ import ValuesView from "./components/ValuesView";
 import CartView from "./components/CartView";
 import CollaborateModal from "./components/CollaborateModal";
 import { CartItem, Product, adaptApiProduct } from "./data";
-import { getProduct } from "./api/tokovio";
+import { ApiVariant, getProduct, getVariants } from "./api/tokovio";
 import { useProducts } from "./hooks/useProducts";
 import { Sparkles } from "lucide-react";
 
@@ -21,6 +21,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<"story" | "products" | "values" | "bag">("story");
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [productVariants, setProductVariants] = useState<ApiVariant[]>([]);
   const [currency, setCurrency] = useState<"IDR" | "USD">("IDR");
   const [collaborationOpen, setCollaborationOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -28,24 +29,43 @@ export default function App() {
   // Pre-fetch the full products list so we can resolve IDs quickly
   const { products: apiProducts } = useProducts();
 
-  // When selectedProductId changes, resolve to a full Product object
+  // When selectedProductId changes, resolve to a full Product object and fetch variants
   useEffect(() => {
     if (!selectedProductId) {
       setSelectedProduct(null);
+      setProductVariants([]);
       return;
     }
 
     // Check local cache from already-fetched list first
     const idx = apiProducts.findIndex((p) => p.id === selectedProductId);
     if (idx !== -1) {
-      setSelectedProduct(adaptApiProduct(apiProducts[idx], idx));
+      const adapted = adaptApiProduct(apiProducts[idx], idx);
+      setSelectedProduct(adapted);
+      // If the product response already has variants, use them; otherwise fetch separately
+      if (adapted.variants.length > 0) {
+        setProductVariants(adapted.variants);
+      } else {
+        getVariants(selectedProductId).then(setProductVariants).catch(() => setProductVariants([]));
+      }
       return;
     }
 
     // Fallback: fetch individual product by ID
     getProduct(selectedProductId)
-      .then((api) => setSelectedProduct(adaptApiProduct(api, 0)))
-      .catch(() => setSelectedProduct(null));
+      .then((api) => {
+        const adapted = adaptApiProduct(api, 0);
+        setSelectedProduct(adapted);
+        if (adapted.variants.length > 0) {
+          setProductVariants(adapted.variants);
+        } else {
+          getVariants(selectedProductId).then(setProductVariants).catch(() => setProductVariants([]));
+        }
+      })
+      .catch(() => {
+        setSelectedProduct(null);
+        setProductVariants([]);
+      });
   }, [selectedProductId, apiProducts]);
 
   const handleSelectProduct = (productId: string) => {
@@ -62,18 +82,27 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleAddToCart = (product: Product, qty: number, color: { name: string; hex: string }) => {
+  const handleAddToCart = (
+    product: Product,
+    qty: number,
+    color: { name: string; hex: string },
+    variant?: ApiVariant,
+  ) => {
     setCartItems((prevItems) => {
-      const existingIdx = prevItems.findIndex(
-        (item) => item.product.id === product.id && item.selectedColor.name === color.name
-      );
+      const existingIdx = variant
+        ? prevItems.findIndex(
+            (item) => item.product.id === product.id && item.selectedVariant?.id === variant.id
+          )
+        : prevItems.findIndex(
+            (item) => item.product.id === product.id && item.selectedColor.name === color.name && !item.selectedVariant
+          );
 
       if (existingIdx > -1) {
         const updated = [...prevItems];
         updated[existingIdx].quantity += qty;
         return updated;
       } else {
-        return [...prevItems, { product, quantity: qty, selectedColor: color, currency }];
+        return [...prevItems, { product, quantity: qty, selectedColor: color, selectedVariant: variant, currency }];
       }
     });
   };
@@ -131,6 +160,7 @@ export default function App() {
             {selectedProduct ? (
               <ProductDetail
                 product={selectedProduct}
+                variants={productVariants}
                 onBack={() => setSelectedProductId(null)}
                 onAddToCart={handleAddToCart}
                 currency={currency}

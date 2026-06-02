@@ -1,4 +1,4 @@
-import { ApiProduct } from "./api/tokovio";
+import { ApiProduct, ApiVariant } from "./api/tokovio";
 
 // ─── Shared brand color palette (fallback for API products that have none) ───
 export const BRAND_COLORS: { name: string; hex: string }[][] = [
@@ -47,12 +47,14 @@ export interface Product {
   priceIDR: number;
   description: string;
   image: string;
+  images: string[];   // all gallery images (first == primary)
   details: string[];
   sizing: string;
   shipping: string;
   colors: { name: string; hex: string }[];
   stock: number;
   is_active: boolean;
+  variants: ApiVariant[];  // empty array when none
 }
 
 // ─── Adapter: ApiProduct → Product ──────────────────────────────────────────
@@ -62,6 +64,14 @@ export function adaptApiProduct(api: ApiProduct, index?: number): Product {
   const idx = index ?? _productCounter++;
   const colorSet = BRAND_COLORS[idx % BRAND_COLORS.length];
 
+  // Build ordered image list from the API images array, fall back to image_url
+  const sortedImages = (api.images ?? [])
+    .slice()
+    .sort((a, b) => a.position - b.position)
+    .map((img) => img.url)
+    .filter(Boolean);
+  const images = sortedImages.length > 0 ? sortedImages : [api.image_url].filter(Boolean);
+
   return {
     id: api.id,
     num: String(idx + 1).padStart(2, "0"),
@@ -70,7 +80,8 @@ export function adaptApiProduct(api: ApiProduct, index?: number): Product {
     priceIDR: api.price,
     priceUSD: Math.round(api.price / IDR_TO_USD_RATE),
     description: api.description,
-    image: api.image_url,
+    image: images[0] ?? api.image_url,
+    images,
     details: [
       "Hand-crafted using traditional techniques by skilled artisans in Malang, East Java.",
       "Made from premium materials for breathability, crisp feel, and all-day comfort.",
@@ -82,6 +93,7 @@ export function adaptApiProduct(api: ApiProduct, index?: number): Product {
     colors: colorSet,
     stock: api.stock,
     is_active: api.is_active,
+    variants: api.variants ?? [],
   };
 }
 
@@ -90,6 +102,7 @@ export interface CartItem {
   product: Product;
   quantity: number;
   selectedColor: { name: string; hex: string };
+  selectedVariant?: ApiVariant;
   currency: "IDR" | "USD";
 }
 

@@ -141,6 +141,24 @@ export interface ThemeConfig {
   primaryColor?: string;
 }
 
+export interface ApiProductImage {
+  id: string;
+  product_id: string;
+  url: string;
+  position: number;
+}
+
+export interface ApiVariant {
+  id: string;
+  product_id: string;
+  name: string;
+  price: number;
+  stock: number;
+  sku?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface ApiProduct {
   id: string;
   name: string;
@@ -150,6 +168,8 @@ export interface ApiProduct {
   is_active: boolean;
   image_url: string;
   created_at: string;
+  images?: ApiProductImage[];
+  variants?: ApiVariant[];
 }
 
 export interface ApiShippingMethod {
@@ -302,6 +322,15 @@ export async function getProducts(query?: string): Promise<ApiProduct[]> {
 /** Fetch a single product by ID */
 export async function getProduct(id: string): Promise<ApiProduct> {
   return apiFetch<ApiProduct>(`/products/${id}`);
+}
+
+/** Fetch variants for a product */
+export async function getVariants(productId: string): Promise<ApiVariant[]> {
+  try {
+    return await apiFetch<ApiVariant[]>(`/products/${productId}/variants`);
+  } catch {
+    return [];
+  }
 }
 
 /** Fetch available shipping methods, optionally filtered by cityId */
