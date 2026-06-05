@@ -17,14 +17,47 @@ import { ApiVariant, getProduct, getVariants } from "./api/tokovio";
 import { useProducts } from "./hooks/useProducts";
 import { Sparkles } from "lucide-react";
 
+const getInitialRouteState = () => {
+  if (typeof window === "undefined") {
+    return { tab: "story" as const, productId: null as string | null };
+  }
+  const path = window.location.pathname;
+  if (path === "/cart" || path === "/bag") {
+    return { tab: "bag" as const, productId: null };
+  }
+  if (path.startsWith("/products/")) {
+    const parts = path.split("/");
+    const id = parts[2];
+    return { tab: "products" as const, productId: id || null };
+  }
+  if (path === "/products") {
+    return { tab: "products" as const, productId: null };
+  }
+  if (path === "/values") {
+    return { tab: "values" as const, productId: null };
+  }
+  return { tab: "story" as const, productId: null };
+};
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"story" | "products" | "values" | "bag">("story");
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"story" | "products" | "values" | "bag">(() => getInitialRouteState().tab);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(() => getInitialRouteState().productId);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [productVariants, setProductVariants] = useState<ApiVariant[]>([]);
   const [currency, setCurrency] = useState<"IDR" | "USD">("IDR");
   const [collaborationOpen, setCollaborationOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+
+  // Listen to browser Back/Forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      const state = getInitialRouteState();
+      setActiveTab(state.tab);
+      setSelectedProductId(state.productId);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   // Pre-fetch the full products list so we can resolve IDs quickly
   const { products: apiProducts } = useProducts();
@@ -71,12 +104,20 @@ export default function App() {
   const handleSelectProduct = (productId: string) => {
     setSelectedProductId(productId);
     setActiveTab("products");
+    window.history.pushState(null, "", `/products/${productId}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleTabChange = (tab: "story" | "products" | "values" | "bag") => {
     if (tab === "products") {
       setSelectedProductId(null);
+      window.history.pushState(null, "", "/products");
+    } else if (tab === "bag") {
+      window.history.pushState(null, "", "/cart");
+    } else if (tab === "values") {
+      window.history.pushState(null, "", "/values");
+    } else {
+      window.history.pushState(null, "", "/");
     }
     setActiveTab(tab);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -161,7 +202,10 @@ export default function App() {
               <ProductDetail
                 product={selectedProduct}
                 variants={productVariants}
-                onBack={() => setSelectedProductId(null)}
+                onBack={() => {
+                  setSelectedProductId(null);
+                  window.history.pushState(null, "", "/products");
+                }}
                 onAddToCart={handleAddToCart}
                 currency={currency}
               />

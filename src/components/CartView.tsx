@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { 
   Trash2, 
@@ -124,6 +124,9 @@ export default function CartView({
   const [isSearching, setIsSearching] = useState(false);
   const [pinLocation, setPinLocation] = useState({ x: 50, y: 55 });
   const [pinAddress, setPinAddress] = useState("Jalan Kuningan 11, Antapani Tengah, Antapani");
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const leafletMapRef = useRef<any>(null);
+  const leafletMarkerRef = useRef<any>(null);
   const [resolvedOsmData, setResolvedOsmData] = useState<any>({
     address: {
       state: "Jawa Barat",
@@ -133,6 +136,15 @@ export default function CartView({
       postcode: "40291"
     }
   });
+  const [mapSearchQuery, setMapSearchQuery] = useState("");
+  const [mapSearchResults, setMapSearchResults] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (isMapModalOpen) {
+      setMapSearchQuery(pinAddress);
+      setMapSearchResults([]);
+    }
+  }, [isMapModalOpen, pinAddress]);
 
   // Shipping selection
   const [shippingMethods, setShippingMethods] = useState<ApiShippingMethod[]>([]);
@@ -348,6 +360,61 @@ export default function CartView({
     return { x, y };
   };
 
+  useEffect(() => {
+    const L = (window as any).L;
+    if (isMapModalOpen && typeof window !== "undefined" && L && mapContainerRef.current) {
+      const { lat, lon } = getLatLonFromXY(pinLocation.x, pinLocation.y);
+
+      const map = L.map(mapContainerRef.current).setView([lat, lon], 15);
+      leafletMapRef.current = map;
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+
+      // Force high resolution default marker icons from CDN to avoid Leaflet bundler image assets loading bug
+      const DefaultIcon = L.icon({
+        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
+      L.Marker.prototype.options.icon = DefaultIcon;
+
+      const marker = L.marker([lat, lon], { draggable: true }).addTo(map);
+      leafletMarkerRef.current = marker;
+
+      marker.on("dragend", () => {
+        const position = marker.getLatLng();
+        const { x, y } = getXYFromLatLon(position.lat, position.lng);
+        setPinLocation({ x, y });
+        fetchAddressFromOSM(x, y);
+      });
+
+      map.on("click", (e: any) => {
+        const position = e.latlng;
+        marker.setLatLng(position);
+        const { x, y } = getXYFromLatLon(position.lat, position.lng);
+        setPinLocation({ x, y });
+        fetchAddressFromOSM(x, y);
+      });
+
+      // Trigger redraw once the modal has rendered to avoid broken tiles
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 250);
+
+      return () => {
+        map.remove();
+        leafletMapRef.current = null;
+        leafletMarkerRef.current = null;
+      };
+    }
+  }, [isMapModalOpen]);
+
+
   const formatFullAddress = (addr: any, displayName: string = ""): string => {
     if (!addr) return displayName;
     const parts = [];
@@ -481,7 +548,7 @@ export default function CartView({
     try {
       const searchQuery = query.toLowerCase().includes("bandung") ? query : `${query}, Bandung`;
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1`,
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=5&addressdetails=1`,
         {
           headers: {
             "Accept-Language": "id,en",
@@ -491,35 +558,49 @@ export default function CartView({
       );
       if (!res.ok) throw new Error("OSM search failed");
       const data = await res.json() as any[];
-      
-      if (data && data.length > 0) {
-        const result = data[0];
-        const lat = parseFloat(result.lat);
-        const lon = parseFloat(result.lon);
-        const { x, y } = getXYFromLatLon(lat, lon);
-        setPinLocation({ x, y });
-        
-        const shortAddr = result.display_name.split(",").slice(0, 3).join(", ").trim();
-        setPinAddress(shortAddr);
-        
-        const revRes = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`,
-          {
-            headers: {
-              "Accept-Language": "id,en",
-              "User-Agent": "KechallyStoreCheckout/1.0"
-            }
-          }
-        );
-        if (revRes.ok) {
-          const revData = await revRes.json();
-          setResolvedOsmData(revData);
-        }
-      }
+      setMapSearchResults(data || []);
     } catch (err) {
       console.error("OSM search error", err);
+      setMapSearchResults([]);
     } finally {
       setIsSearching(false);
+    }
+  };
+
+  const handleSelectSuggestion = async (result: any) => {
+    if (!result) return;
+    const lat = parseFloat(result.lat);
+    const lon = parseFloat(result.lon);
+    const { x, y } = getXYFromLatLon(lat, lon);
+    setPinLocation({ x, y });
+    if (leafletMapRef.current) {
+      leafletMapRef.current.setView([lat, lon], 16);
+      if (leafletMarkerRef.current) {
+        leafletMarkerRef.current.setLatLng([lat, lon]);
+      }
+    }
+    
+    const shortAddr = result.display_name.split(",").slice(0, 3).join(", ").trim();
+    setPinAddress(shortAddr);
+    setMapSearchQuery(result.display_name);
+    setMapSearchResults([]);
+
+    try {
+      const revRes = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&addressdetails=1`,
+        {
+          headers: {
+            "Accept-Language": "id,en",
+            "User-Agent": "KechallyStoreCheckout/1.0"
+          }
+        }
+      );
+      if (revRes.ok) {
+        const revData = await revRes.json();
+        setResolvedOsmData(revData);
+      }
+    } catch (err) {
+      console.error("Reverse geocoding selection error", err);
     }
   };
 
@@ -633,9 +714,14 @@ export default function CartView({
       async (position) => {
         const { latitude, longitude } = position.coords;
         
-        // Convert to map X/Y using Bandung coordinates (for the simulated visual indicator bounds)
         const { x, y } = getXYFromLatLon(latitude, longitude);
         setPinLocation({ x, y });
+        if (leafletMapRef.current) {
+          leafletMapRef.current.setView([latitude, longitude], 16);
+          if (leafletMarkerRef.current) {
+            leafletMarkerRef.current.setLatLng([latitude, longitude]);
+          }
+        }
         
         try {
           const res = await fetch(
@@ -1954,30 +2040,52 @@ export default function CartView({
                     {/* Body */}
                     <div className="p-4 space-y-4">
                       
-                      {/* Search Input Bar */}
-                      <div className="flex rounded-[4px] overflow-hidden border border-brand-accent/20">
-                        <input
-                          type="text"
-                          placeholder="Search address, street, or area...."
-                          defaultValue={isPinPointed ? "Jalan Kuningan 11, Antapani Tengah" : ""}
-                          id="map-search-input"
-                          className="w-full bg-brand-bg hover:bg-brand-bg/80 focus:bg-white text-xs px-4 py-3 focus:outline-hidden font-serif italic text-brand-primary transition"
-                        />
-                        <button 
-                          type="button"
-                          onClick={() => {
-                            const inputEl = document.getElementById("map-search-input") as HTMLInputElement;
-                            const val = inputEl ? inputEl.value : "";
-                            handleMapSearch(val);
-                          }}
-                          className="bg-brand-primary hover:bg-brand-accent text-white text-[11px] px-6 font-sans font-bold uppercase transition cursor-pointer"
-                        >
-                          {isSearching ? (
-                            <Loader2 size={12} className="animate-spin" />
-                          ) : (
-                            "Search"
-                          )}
-                        </button>
+                      {/* Search Input Bar with suggestions */}
+                      <div className="relative">
+                        <div className="flex rounded-[4px] overflow-hidden border border-brand-accent/20">
+                          <input
+                            type="text"
+                            placeholder="Search address, street, or area...."
+                            value={mapSearchQuery}
+                            onChange={(e) => setMapSearchQuery(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                handleMapSearch(mapSearchQuery);
+                              }
+                            }}
+                            id="map-search-input"
+                            className="w-full bg-brand-bg hover:bg-brand-bg/80 focus:bg-white text-xs px-4 py-3 focus:outline-hidden font-serif italic text-brand-primary transition"
+                          />
+                          <button 
+                            type="button"
+                            onClick={() => handleMapSearch(mapSearchQuery)}
+                            className="bg-brand-primary hover:bg-brand-accent text-white text-[11px] px-6 font-sans font-bold uppercase transition cursor-pointer"
+                          >
+                            {isSearching ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              "Search"
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Suggestions List Dropdown */}
+                        {mapSearchResults.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-brand-accent/25 rounded-[4px] shadow-2xl overflow-hidden max-h-[200px] overflow-y-auto z-50">
+                            {mapSearchResults.map((res, idx) => (
+                              <div
+                                key={idx}
+                                onClick={() => handleSelectSuggestion(res)}
+                                className="p-3 border-b border-brand-accent/10 hover:bg-brand-bg cursor-pointer transition text-left"
+                              >
+                                <p className="text-xs font-bold text-brand-primary font-sans line-clamp-1">{res.display_name}</p>
+                                <p className="text-[9px] text-brand-muted font-serif italic mt-0.5">
+                                  {res.address ? (res.address.city || res.address.state || "Bandung") : "Bandung"}, Indonesia
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       {/* Info Instruction bar */}
@@ -1986,89 +2094,12 @@ export default function CartView({
                         <span className="font-bold text-brand-primary">• Click or drag to pick location</span>
                       </div>
 
-                      {/* The Simulated Leaflet Map Grid */}
+                      {/* The Leaflet Map Container */}
                       <div 
-                        onClick={(e) => {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const x = ((e.clientX - rect.left) / rect.width) * 100;
-                          const y = ((e.clientY - rect.top) / rect.height) * 100;
-                          setPinLocation({ x, y });
-                          fetchAddressFromOSM(x, y);
-                        }}
-                        className="w-full h-[320px] rounded-[4px] border border-brand-accent/15 overflow-hidden bg-[#EBF0F5] relative select-none cursor-crosshair"
-                      >
-                        {/* SVG Map Graphics - extremely precise and premium */}
-                        <svg className="w-full h-full absolute inset-0 opacity-80" xmlns="http://www.w3.org/2000/svg">
-                          {/* Green areas */}
-                          <rect x="10%" y="10%" width="30%" height="25%" rx="8" fill="#D5E8D4" stroke="#B9E3B4" strokeWidth="1" />
-                          <text x="15%" y="20%" className="fill-[#5C8E58] font-sans text-[9px] uppercase tracking-widest font-bold font-serif italic">Taman Prabuwangi</text>
-
-                          <rect x="70%" y="45%" width="25%" height="30%" rx="8" fill="#D5E8D4" stroke="#B9E3B4" strokeWidth="1" />
-                          <text x="75%" y="55%" className="fill-[#5C8E58] font-sans text-[9px] uppercase tracking-widest font-bold font-serif italic">Antapani Wetan</text>
-
-                          {/* River */}
-                          <path d="M 0,220 Q 200,240 400,180 T 800,200" fill="none" stroke="#B2CFFF" strokeWidth="14" strokeLinecap="round" />
-                          <text x="350" y="170" className="fill-[#4A7BB0] font-sans text-[7px] uppercase tracking-widest font-bold font-mono">Kali Cidurian</text>
-
-                          {/* Main roads */}
-                          <line x1="0" y1="120" x2="800" y2="120" stroke="#FFF" strokeWidth="18" />
-                          <line x1="0" y1="120" x2="800" y2="120" stroke="#E1E5EB" strokeWidth="14" />
-                          <text x="50" y="123" className="fill-[#7B8B9B] font-sans text-[8px] uppercase tracking-widest font-bold">Jalan Terusan Jakarta</text>
-
-                          <line x1="300" y1="0" x2="300" y2="400" stroke="#FFF" strokeWidth="14" />
-                          <line x1="300" y1="0" x2="300" y2="400" stroke="#E1E5EB" strokeWidth="10" />
-
-                          <line x1="500" y1="0" x2="500" y2="400" stroke="#FFF" strokeWidth="14" />
-                          <line x1="500" y1="0" x2="500" y2="400" stroke="#E1E5EB" strokeWidth="10" />
-                          <text x="505" y="300" className="fill-[#7B8B9B] font-sans text-[8px] uppercase tracking-widest font-bold rotate-90 origin-left">Jalan Kuningan</text>
-
-                          {/* Local streets */}
-                          <path d="M 300,180 L 500,280 L 800,280" fill="none" stroke="#FFF" strokeWidth="10" />
-                          <path d="M 300,180 L 500,280 L 800,280" fill="none" stroke="#E6EAF0" strokeWidth="7" />
-                          <text x="580" y="277" className="fill-[#8A9AA8] font-sans text-[7px] uppercase tracking-widest font-bold">Antapani Kidul</text>
-
-                          {/* Water label */}
-                          <path d="M 120,290 C 220,330 320,280 400,320" fill="none" stroke="#B2CFFF" strokeWidth="6" />
-                        </svg>
-
-                        {/* Leaflet Controls simulation */}
-                        <div className="absolute top-3 left-3 bg-white border border-brand-accent/25 rounded-[3px] shadow-xs flex flex-col overflow-hidden text-brand-primary font-bold text-sm">
-                          <button type="button" onClick={(e) => { e.stopPropagation(); }} className="w-7 h-7 flex items-center justify-center hover:bg-brand-bg transition cursor-pointer">+</button>
-                          <div className="h-[1px] bg-brand-accent/15" />
-                          <button type="button" onClick={(e) => { e.stopPropagation(); }} className="w-7 h-7 flex items-center justify-center hover:bg-brand-bg transition cursor-pointer">—</button>
-                        </div>
-
-                        {/* Leaflet Attribution simulation */}
-                        <div className="absolute bottom-1 right-2 bg-white/70 px-1 py-0.5 rounded-[2px] text-[7px] font-mono text-brand-muted pointer-events-none">
-                           Leaflet | © OpenStreetMap contributors
-                        </div>
-
-                        {/* Simulated Draggable Map Pin */}
-                        <div 
-                          style={{ 
-                            left: `${pinLocation.x}%`, 
-                            top: `${pinLocation.y}%`, 
-                            transform: 'translate(-50%, -100%)' 
-                          }}
-                          className="absolute transition-all duration-300 pointer-events-none"
-                        >
-                          {/* Pulsing marker */}
-                          <div className="flex flex-col items-center">
-                            {/* Address Tooltip bubble */}
-                            <div className="bg-brand-primary text-white text-[8px] font-sans px-2.5 py-1.5 rounded-[4px] shadow-lg mb-1 animate-bounce font-bold tracking-wide whitespace-nowrap border border-brand-accent/20 flex items-center space-x-1.5">
-                              <MapPin size={8} className="text-brand-pink shrink-0" />
-                              <span>{pinAddress.split(",")[1]?.trim() || "Antapani Tengah"}</span>
-                            </div>
-                            
-                            {/* Pin Icon */}
-                            <div className="relative">
-                              <div className="absolute -inset-2 bg-brand-primary/20 rounded-full animate-ping pointer-events-none" />
-                              <MapPin size={28} className="text-brand-primary fill-brand-pink filter drop-shadow-md" />
-                              <div className="w-2.5 h-2.5 bg-brand-primary rounded-full absolute top-[7px] left-[9px] border border-white" />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                        ref={mapContainerRef}
+                        className="w-full h-[320px] rounded-[4px] border border-brand-accent/15 overflow-hidden relative"
+                        style={{ zIndex: 1 }}
+                      />
 
                       {/* Footer buttons of modal */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
