@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
   import { ArrowLeft, ArrowRight, Star, Heart, Compass, Globe, Sparkles, Quote, Menu } from "lucide-react";
   import { TESTIMONIALS, Product, adaptApiProduct } from "../data";
   import { useProducts } from "../hooks/useProducts";
@@ -23,6 +23,14 @@ import { useState } from "react";
   export default function StoryView({ setActiveTab, onSelectProduct, currency, onOpenCollaborate }: StoryViewProps) {
     const [carouselIndex, setCarouselIndex] = useState(0);
     const [testimonialIndex, setTestimonialIndex] = useState(0);
+    const [shareUrl, setShareUrl] = useState("");
+
+    useEffect(() => {
+      setShareUrl(window.location.href);
+    }, []);
+
+    const shareText = `Check out Kechally Store for premium handmade mukenas: ${shareUrl}`;
+    const whatsappShareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
     
     // Fetch live store metadata and theme config
     const { store, parsedTheme } = useStore();
@@ -512,6 +520,53 @@ import { useState } from "react";
             </div>
 
           </div>
+        </section>
+
+        {/* WHATSAPP SHARE SECTION */}
+        <section id="homepage-share-section" className="py-20 bg-[#FAF0F2] border-b border-brand-primary/10 px-4 sm:px-6 lg:px-12 text-center relative overflow-hidden">
+          <div className="max-w-3xl mx-auto space-y-8 animate-fade-in relative z-10">
+            {/* Small rose-colored eyebrow label */}
+            <div className="flex items-center justify-center space-x-3 text-brand-accent">
+              <span className="text-[10px] sm:text-xs font-sans font-bold uppercase tracking-[0.25em]">
+                Share the Comfort
+              </span>
+              <div className="h-[1px] w-8 bg-brand-accent/40" />
+            </div>
+
+            {/* Serif title */}
+            <h2 className="font-serif text-3xl sm:text-4xl text-brand-primary font-normal tracking-tight">
+              Spread the comfort of <br />
+              <span className="font-serif italic font-bold text-brand-accent">sacred devotion</span>
+            </h2>
+
+            {/* Body text */}
+            <p className="text-brand-muted text-xs sm:text-sm md:text-base leading-relaxed font-serif italic max-w-xl mx-auto">
+              Help your loved ones discover the serene comfort of Kechally's premium handmade mukenas. Share our online boutique directly with your family and friends on WhatsApp.
+            </p>
+
+            {/* Premium Button */}
+            <div className="pt-2 flex justify-center">
+              <a
+                href={whatsappShareUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center space-x-3 bg-brand-primary hover:bg-brand-accent text-[#FDF8F5] transition-all duration-300 transform active:scale-[0.98] text-xs font-sans font-bold px-8 py-4 rounded-[4px] tracking-widest uppercase cursor-pointer shadow-xs animate-pulse-slow"
+              >
+                {/* WhatsApp Logo */}
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.062 5.248 5.308 0 11.773 0c3.133.001 6.08 1.22 8.293 3.435 2.213 2.214 3.43 5.162 3.43 8.294 0 6.523-5.246 11.77-11.71 11.77-2.007 0-3.98-.51-5.733-1.48L0 24zm6.49-5.32c1.676.995 3.518 1.52 5.4 1.52 5.372 0 9.743-4.372 9.745-9.746.002-2.6-1.01-5.047-2.846-6.883-1.835-1.835-4.282-2.848-6.883-2.848-5.377 0-9.749 4.376-9.752 9.753-.001 1.956.51 3.865 1.48 5.54L2.83 21.17l5.717-1.49zm10.124-4.52c-.272-.137-1.61-.795-1.86-.885-.25-.09-.432-.136-.613.137-.18.273-.7 1.09-.858 1.272-.16.182-.317.205-.59.068-2.65-1.32-3.793-2.285-5.307-4.887-.272-.465.272-.432.78-1.442.08-.163.04-.306-.02-.442-.06-.137-.614-1.48-.84-2.027-.22-.53-.443-.458-.613-.466-.16-.008-.34-.01-.522-.01-.18 0-.476.067-.725.34-.25.272-.953.93-.953 2.27 0 1.338.975 2.628 1.11 2.81 1.34 1.76 2.053 2.69 3.864 3.407.973.385 1.733.612 2.324.8.98.31 1.875.266 2.58.16.788-.117 2.41-.986 2.75-1.94.34-.954.34-1.773.238-1.94-.1-.167-.363-.254-.636-.39z" />
+                </svg>
+                <span>Bagikan ke WhatsApp</span>
+              </a>
+            </div>
+          </div>
+          {/* Subtle noise background overlay */}
+          <svg className="absolute inset-0 w-full h-full opacity-[0.02] pointer-events-none mix-blend-overlay z-0 animate-pulse-slow">
+            <filter id="shareNoise">
+              <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
+            </filter>
+            <rect width="100%" height="100%" filter="url(#shareNoise)" />
+          </svg>
         </section>
 
         {/* FULL-WIDTH COLLABORATION CTA SECTION */}

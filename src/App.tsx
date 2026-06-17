@@ -12,6 +12,7 @@ import ProductDetail from "./components/ProductDetail";
 import ValuesView from "./components/ValuesView";
 import CartView from "./components/CartView";
 import CollaborateModal from "./components/CollaborateModal";
+import FloatingShareButton from "./components/FloatingShareButton";
 import { CartItem, Product, adaptApiProduct } from "./data";
 import { ApiVariant, getProduct, getVariants } from "./api/tokovio";
 import { useProducts } from "./hooks/useProducts";
@@ -253,6 +254,9 @@ export default function App() {
         isOpen={collaborationOpen}
         onClose={() => setCollaborationOpen(false)}
       />
+
+      {/* Floating share & WhatsApp action button */}
+      <FloatingShareButton />
 
     </div>
   );
